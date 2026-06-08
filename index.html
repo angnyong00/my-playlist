@@ -73,7 +73,7 @@
         #gatekeeper {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #020205;
-            display: flex; justify-content: center; align-items: center;
+            display: none; justify-content: center; align-items: center;
             z-index: 9999; transition: opacity 0.8s ease;
         }
         .auth-box {
@@ -139,7 +139,7 @@
 
         /* ─── 메인 스테이지 ─── */
         #main-stage {
-            display: none; opacity: 0;
+            display: flex; opacity: 1;
             width: 94%; max-width: 1080px;
             gap: 36px;
             justify-content: center; align-items: center;
@@ -498,12 +498,59 @@
         }
         .btn-add:hover { background: rgba(0,245,255,0.04); border-color: rgba(0,245,255,0.3); color: var(--accent); }
 
+        /* ─── 사이버펑크 커서 ─── */
+        * { cursor: none !important; }
+        #cyber-cursor {
+            position: fixed;
+            width: 10px; height: 10px;
+            background: var(--accent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99999;
+            transform: translate(-50%, -50%);
+            transition: width 0.15s, height 0.15s, background 0.15s;
+            box-shadow: 0 0 8px var(--accent), 0 0 20px rgba(0,245,255,0.5);
+            mix-blend-mode: screen;
+        }
+        #cyber-cursor-ring {
+            position: fixed;
+            width: 30px; height: 30px;
+            border: 1px solid rgba(0,245,255,0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99998;
+            transform: translate(-50%, -50%);
+            transition: transform 0.08s linear, width 0.2s, height 0.2s, border-color 0.2s;
+            box-shadow: 0 0 6px rgba(0,245,255,0.2);
+        }
+        #cyber-cursor.clicking {
+            width: 6px; height: 6px;
+            background: var(--cyber-pink);
+            box-shadow: 0 0 12px var(--cyber-pink);
+        }
+        #cyber-cursor-ring.clicking {
+            width: 42px; height: 42px;
+            border-color: var(--cyber-pink);
+        }
+        .cursor-trail {
+            position: fixed;
+            width: 4px; height: 4px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99997;
+            transform: translate(-50%, -50%);
+            background: var(--accent);
+            opacity: 0;
+        }
+
         input[type="file"] { display: none; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
     <canvas id="space-canvas"></canvas>
+    <div id="cyber-cursor"></div>
+    <div id="cyber-cursor-ring"></div>
 
     <div class="yt-hidden-player">
         <div id="yt-player-core"></div>
@@ -632,18 +679,6 @@
             <div class="section-title" style="border:none; margin-bottom:12px;">// TRACK LIST</div>
 
             <div id="track-manager-zone">
-                <div class="track-node">
-                    <div class="track-number">01</div>
-                    <div class="t-pure-text-wrap">
-                        <span class="t-pure-title">우주 속의 몽환 소나타 (샘플)</span>
-                        <span class="t-pure-artist">KAMISHIRO RUI</span>
-                    </div>
-                    <input type="text" class="t-name" value="우주 속의 몽환 소나타 (샘플)" placeholder="곡 제목" oninput="syncPureText(this)">
-                    <input type="text" class="t-artist" value="Kamishiro Rui" placeholder="아티스트" oninput="syncPureText(this)">
-                    <input type="text" class="t-link" value="https://www.youtube.com/watch?v=dQw4w9WgXcQ" placeholder="유튜브 주소" oninput="saveAll()">
-                    <button class="btn-play-trigger" onclick="playSelectedTrack(this)">▶</button>
-                    <button class="btn-delete-node" onclick="removeTrackNode(this)">✕</button>
-                </div>
             </div>
 
             <button class="btn-add" id="add-track-btn" onclick="addNewTrackSlot()">+ ADD NEW TRACK</button>
@@ -653,6 +688,7 @@
     
     <script>
         const SECRET_PASSTOKEN = "angiragoham";
+        // 각 브라우저마다 독립적으로 저장됨 (친구들끼리 데이터 안 섞임)
         const STORAGE_KEY = 'nebula_cyber_save_v1';
         const IMAGE_DB_NAME = 'NebulaCoverDB';
         const IMAGE_STORE_NAME = 'covers';
@@ -944,8 +980,20 @@
 
         function syncPureText(input) {
             const node = input.parentElement;
-            if (input.classList.contains('t-name')) node.querySelector('.t-pure-title').innerText = input.value || "UNTITLED";
-            else if (input.classList.contains('t-artist')) node.querySelector('.t-pure-artist').innerText = (input.value || "UNKNOWN").toUpperCase();
+            if (input.classList.contains('t-name')) {
+                const newTitle = input.value || "UNTITLED";
+                node.querySelector('.t-pure-title').innerText = newTitle;
+                // 현재 재생 중인 트랙이면 폰 화면도 즉시 업데이트
+                if (node.classList.contains('playing-active')) {
+                    document.getElementById('display-title').innerText = newTitle;
+                }
+            } else if (input.classList.contains('t-artist')) {
+                const newArtist = (input.value || "UNKNOWN").toUpperCase();
+                node.querySelector('.t-pure-artist').innerText = newArtist;
+                if (node.classList.contains('playing-active')) {
+                    document.getElementById('display-artist').innerText = '— ' + newArtist + ' —';
+                }
+            }
             saveAll();
         }
 
@@ -1272,6 +1320,120 @@
                 pulseRings.forEach(r => { r.x = W / 2; r.y = H / 2; });
             });
         }
+        // ─── 사이버펑크 커서 이펙트 ───
+        (function() {
+            const cursor = document.getElementById('cyber-cursor');
+            const ring = document.getElementById('cyber-cursor-ring');
+            let mouseX = 0, mouseY = 0;
+            let ringX = 0, ringY = 0;
+            const TRAIL_COUNT = 8;
+
+            // 트레일 점들 생성
+            const trails = Array.from({ length: TRAIL_COUNT }, () => {
+                const el = document.createElement('div');
+                el.className = 'cursor-trail';
+                document.body.appendChild(el);
+                return { el, x: 0, y: 0 };
+            });
+
+            // 마우스 위치 추적
+            document.addEventListener('mousemove', e => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                cursor.style.left = mouseX + 'px';
+                cursor.style.top = mouseY + 'px';
+
+                // 파티클 이펙트 (빠르게 움직일 때)
+                if (Math.random() > 0.6) spawnParticle(mouseX, mouseY);
+            });
+
+            // 클릭 이펙트
+            document.addEventListener('mousedown', () => {
+                cursor.classList.add('clicking');
+                ring.classList.add('clicking');
+                spawnClickBurst(mouseX, mouseY);
+            });
+            document.addEventListener('mouseup', () => {
+                cursor.classList.remove('clicking');
+                ring.classList.remove('clicking');
+            });
+
+            // 링 부드럽게 따라오기
+            function animateRing() {
+                ringX += (mouseX - ringX) * 0.12;
+                ringY += (mouseY - ringY) * 0.12;
+                ring.style.left = ringX + 'px';
+                ring.style.top = ringY + 'px';
+
+                // 트레일 업데이트
+                let prevX = mouseX, prevY = mouseY;
+                trails.forEach((t, i) => {
+                    const delay = 0.08 + i * 0.06;
+                    t.x += (prevX - t.x) * delay;
+                    t.y += (prevY - t.y) * delay;
+                    t.el.style.left = t.x + 'px';
+                    t.el.style.top = t.y + 'px';
+                    const alpha = (1 - i / TRAIL_COUNT) * 0.35;
+                    const size = 4 - i * 0.3;
+                    t.el.style.opacity = alpha;
+                    t.el.style.width = size + 'px';
+                    t.el.style.height = size + 'px';
+                    prevX = t.x; prevY = t.y;
+                });
+
+                requestAnimationFrame(animateRing);
+            }
+            animateRing();
+
+            // 클릭 시 방사형 버스트 파티클
+            function spawnClickBurst(x, y) {
+                for (let i = 0; i < 8; i++) {
+                    const p = document.createElement('div');
+                    p.style.cssText = `
+                        position:fixed; width:3px; height:3px; border-radius:50%;
+                        background:${Math.random() > 0.5 ? 'var(--accent)' : 'var(--cyber-pink)'};
+                        left:${x}px; top:${y}px;
+                        pointer-events:none; z-index:99996;
+                        transform:translate(-50%,-50%);
+                        box-shadow: 0 0 4px currentColor;
+                    `;
+                    document.body.appendChild(p);
+                    const angle = (i / 8) * Math.PI * 2;
+                    const dist = 20 + Math.random() * 20;
+                    const tx = Math.cos(angle) * dist;
+                    const ty = Math.sin(angle) * dist;
+                    p.animate([
+                        { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
+                        { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0)`, opacity: 0 }
+                    ], { duration: 400, easing: 'ease-out' }).onfinish = () => p.remove();
+                }
+            }
+
+            // 이동 중 잔광 파티클
+            function spawnParticle(x, y) {
+                const p = document.createElement('div');
+                const size = Math.random() * 3 + 1;
+                p.style.cssText = `
+                    position:fixed; width:${size}px; height:${size}px; border-radius:50%;
+                    background:var(--accent); opacity:0.6;
+                    left:${x}px; top:${y}px;
+                    pointer-events:none; z-index:99995;
+                    transform:translate(-50%,-50%);
+                    box-shadow: 0 0 4px rgba(0,245,255,0.5);
+                `;
+                document.body.appendChild(p);
+                p.animate([
+                    { opacity: 0.6, transform: 'translate(-50%,-50%) scale(1)' },
+                    { opacity: 0, transform: 'translate(-50%,-50%) scale(0)' }
+                ], { duration: 350 + Math.random() * 200, easing: 'ease-out' }).onfinish = () => p.remove();
+            }
+
+            // 모바일 터치 시 커서 숨김
+            window.addEventListener('touchstart', () => {
+                cursor.style.display = 'none';
+                ring.style.display = 'none';
+            });
+        })();
     </script>
 </body>
 </html>
