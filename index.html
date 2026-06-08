@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula Cyber Player V8 - Rui Custom</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600&family=Titillium+Web:wght@300;400;600&family=Nova+Mono&family=VT323&family=Audiowide&display=swap');
+
+        :root {
+            --bg-gradient: linear-gradient(135deg, #04040a 0%, #0a0514 50%, #060410 100%);
+            --panel-bg: rgba(4, 4, 14, 0.85);
+            --text-main: #dde4f0;
+            --text-sub: #b197fc;
+            --accent: #00f5ff;
+            --accent2: #7c3aed;
+            --cyber-pink: #ff2d6b;
+            --neon-glow: 0 0 15px rgba(0, 245, 255, 0.7), 0 0 30px rgba(0, 245, 255, 0.3);
+            --pink-glow: 0 0 15px rgba(255, 45, 107, 0.7);
+            --purple-glow: 0 0 15px rgba(124, 58, 237, 0.5);
+            --main-font-size: 14px;
+            --main-font-color: #dde4f0;
+            --font-family-set: 'Rajdhani', 'Malgun Gothic', sans-serif;
+            --display-font: 'Orbitron', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-family-set);
+            background: var(--bg-gradient);
+            color: var(--main-font-color);
+            font-size: var(--main-font-size);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 배경 그리드 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 스캔라인 오버레이 */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,0.08) 2px,
+                rgba(0,0,0,0.08) 4px
+            );
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        #space-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+
+        /* ─── 게이트키퍼 ─── */
+        #gatekeeper {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #020205;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999; transition: opacity 0.8s ease;
+        }
+        .auth-box {
+            background: rgba(6, 4, 20, 0.95);
+            padding: 50px 40px; border-radius: 4px; text-align: center;
+            border: 1px solid var(--cyber-pink);
+            box-shadow: 0 0 40px rgba(255,45,107,0.2), inset 0 0 30px rgba(255,45,107,0.05);
+            width: 90%; max-width: 380px; position: relative;
+        }
+        .auth-box::before, .auth-box::after {
+            content: '';
+            position: absolute;
+            width: 20px; height: 20px;
+            border-color: var(--accent);
+            border-style: solid;
+        }
+        .auth-box::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+        .auth-box::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+        .warning-tag {
+            font-family: var(--display-font);
+            font-size: 9px; color: var(--cyber-pink);
+            letter-spacing: 6px; margin-bottom: 8px;
+            text-shadow: var(--pink-glow);
+            animation: blink 1.2s infinite alternate;
+        }
+        @keyframes blink { from { opacity: 0.2; } to { opacity: 1; } }
+
+        .auth-box h2 {
+            font-family: var(--display-font);
+            font-size: 13px; font-weight: 700; letter-spacing: 4px;
+            color: #fff; margin-bottom: 30px;
+            text-shadow: var(--neon-glow);
+        }
+        .auth-box input {
+            width: 100%; padding: 14px; background: #08081a;
+            border: 1px solid rgba(0,245,255,0.2); border-radius: 2px;
+            color: var(--accent); text-align: center;
+            font-family: var(--display-font); font-size: 13px;
+            margin-bottom: 20px; outline: none; letter-spacing: 3px;
+            transition: all 0.3s;
+        }
+        .auth-box input:focus { border-color: var(--accent); box-shadow: var(--neon-glow); }
+        .auth-box input::placeholder { color: #2a3050; letter-spacing: 2px; }
+        .auth-btn {
+            width: 100%; padding: 14px;
+            background: transparent;
+            border: 1px solid var(--cyber-pink);
+            color: var(--cyber-pink); font-family: var(--display-font);
+            font-weight: 700; font-size: 11px; letter-spacing: 4px;
+            cursor: pointer; transition: all 0.2s;
+            position: relative; overflow: hidden;
+        }
+        .auth-btn::before {
+            content: '';
+            position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,45,107,0.2), transparent);
+            transition: left 0.4s;
+        }
+        .auth-btn:hover::before { left: 100%; }
+        .auth-btn:hover { background: rgba(255,45,107,0.1); box-shadow: var(--pink-glow); }
+        .error-msg { color: var(--cyber-pink); font-size: 11px; margin-top: 15px; display: none; letter-spacing: 1px; }
+
+        /* ─── 메인 스테이지 ─── */
+        #main-stage {
+            display: none; opacity: 0;
+            width: 94%; max-width: 1080px;
+            gap: 36px;
+            justify-content: center; align-items: center;
+            z-index: 2;
+            transition: opacity 0.8s ease;
+        }
+
+        /* ─── 폰 목업 ─── */
+        .phone-container { flex: 1; max-width: 280px; display: flex; justify-content: center; }
+        .phone-mockup {
+            width: 260px; height: 560px;
+            background: linear-gradient(160deg, #0c0c1a, #060610);
+            border: 1px solid rgba(0,245,255,0.15);
+            border-radius: 36px;
+            position: relative;
+            box-shadow:
+                0 0 0 8px #08080f,
+                0 0 0 9px rgba(0,245,255,0.08),
+                -15px 25px 50px rgba(0,0,0,0.9),
+                0 0 60px rgba(0,245,255,0.04);
+            overflow: hidden;
+            display: flex; flex-direction: column;
+            transform: rotate(-1.5deg);
+            transition: transform 0.4s ease;
+        }
+        .phone-mockup:hover { transform: rotate(0deg) scale(1.02); }
+
+        /* 폰 상단 노치 */
+        .phone-notch {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 80px; height: 22px;
+            background: #08080f;
+            border-radius: 0 0 14px 14px;
+            z-index: 5;
+        }
+
+        /* 폰 측면 버튼 장식 */
+        .phone-mockup::before {
+            content: '';
+            position: absolute; right: -2px; top: 120px;
+            width: 3px; height: 60px;
+            background: rgba(0,245,255,0.15);
+            border-radius: 2px;
+        }
+
+        .phone-screen {
+            flex: 1; padding: 36px 18px 20px;
+            display: flex; flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 폰 내부 상단 광원 */
+        .phone-screen::before {
+            content: '';
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 100px; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            box-shadow: 0 0 20px var(--accent);
+        }
+
+        .phone-header {
+            font-family: var(--display-font);
+            font-size: 9px; color: rgba(0,245,255,0.5);
+            letter-spacing: 4px; width: 100%; text-align: center;
+        }
+
+        /* 앨범 아트 */
+        .album-art-zone {
+            width: 170px; height: 170px;
+            background: #08081a;
+            border-radius: 12px;
+            border: 1px solid rgba(0,245,255,0.1);
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden; position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,245,255,0.05);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .album-art-zone:hover {
+            border-color: rgba(0,245,255,0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 20px rgba(0,245,255,0.1);
+        }
+        .album-art-zone::before {
+            content: '';
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(0,245,255,0.03) 0%, transparent 60%);
+            pointer-events: none; z-index: 1;
+        }
+        .album-art-zone img { width: 100%; height: 100%; object-fit: cover; }
+        .album-hint {
+            position: absolute; font-size: 10px;
+            color: rgba(0,245,255,0.3); letter-spacing: 2px;
+            font-family: var(--display-font);
+            text-align: center; pointer-events: none; z-index: 2;
+        }
+
+        /* 트랙 정보 */
+        .track-info-zone { text-align: center; width: 100%; }
+        #display-title {
+            font-family: var(--display-font);
+            font-size: 13px; font-weight: 700;
+            margin-bottom: 6px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+        #display-title.playing {
+            color: var(--accent);
+            text-shadow: var(--neon-glow);
+        }
+        #display-artist {
+            font-size: 11px; color: var(--text-sub);
+            letter-spacing: 3px; font-weight: 300;
+        }
+
+        /* 볼륨 슬라이더 */
+        .volume-container { width: 88%; display: flex; align-items: center; gap: 10px; }
+        .volume-icon { font-size: 10px; color: rgba(0,245,255,0.3); }
+        .volume-slider {
+            flex: 1; -webkit-appearance: none;
+            height: 2px; border-radius: 1px; outline: none;
+            background: rgba(0,245,255,0.1);
+        }
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            box-shadow: var(--neon-glow);
+        }
+
+        /* 재생 컨트롤 */
+        .playback-controls { display: flex; gap: 28px; align-items: center; }
+        .play-btn {
+            background: none; border: none;
+            color: rgba(0,245,255,0.5);
+            font-size: 20px; cursor: pointer;
+            transition: all 0.2s; outline: none;
+        }
+        .play-btn:hover { color: var(--accent); transform: scale(1.15); text-shadow: var(--neon-glow); }
+        #master-play-btn {
+            width: 48px; height: 48px;
+            background: transparent;
+            border: 1px solid var(--accent);
+            border-radius: 50%;
+            color: var(--accent); font-size: 16px;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 0 15px rgba(0,245,255,0.2), inset 0 0 15px rgba(0,245,255,0.05);
+            transition: all 0.2s;
+        }
+        #master-play-btn:hover {
+            background: rgba(0,245,255,0.1);
+            box-shadow: var(--neon-glow);
+        }
+
+        /* ─── 이퀄라이저 영역 (유튜브 대체) ─── */
+        .eq-zone {
+            width: 100%;
+            height: 52px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 4px;
+            padding: 0 8px;
+            position: relative;
+        }
+        .eq-bar {
+            flex: 1;
+            max-width: 14px;
+            background: linear-gradient(to top, var(--accent), var(--accent2));
+            border-radius: 2px 2px 0 0;
+            min-height: 3px;
+            opacity: 0.7;
+            transition: height 0.05s;
+        }
+        .eq-zone.idle .eq-bar {
+            height: 3px !important;
+            opacity: 0.2;
+        }
+        /* 바닥 선 */
+        .eq-zone::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 8px; right: 8px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,245,255,0.3), transparent);
+        }
+
+        /* 유튜브 숨김 처리 */
+        .yt-hidden-player {
+            position: fixed;
+            bottom: -9999px; left: -9999px;
+            width: 1px; height: 1px;
+            opacity: 0; pointer-events: none;
+        }
+
+        /* ─── 대시보드 ─── */
+        .control-dashboard {
+            flex: 1.6;
+            background: var(--panel-bg);
+            backdrop-filter: blur(30px);
+            border-radius: 4px;
+            padding: 32px;
+            border: 1px solid rgba(0,245,255,0.1);
+            box-shadow:
+                0 0 0 1px rgba(0,245,255,0.03),
+                0 30px 60px rgba(0,0,0,0.8),
+                inset 0 0 30px rgba(0,245,255,0.02);
+            height: 560px;
+            overflow-y: auto;
+            position: relative;
+        }
+        /* 대시보드 모서리 장식 */
+        .control-dashboard::before, .control-dashboard::after {
+            content: ''; position: absolute;
+            width: 16px; height: 16px;
+            border-color: rgba(0,245,255,0.4); border-style: solid;
+        }
+        .control-dashboard::before { top: 0; left: 0; border-width: 1px 0 0 1px; }
+        .control-dashboard::after { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+        .control-dashboard::-webkit-scrollbar { width: 2px; }
+        .control-dashboard::-webkit-scrollbar-track { background: transparent; }
+        .control-dashboard::-webkit-scrollbar-thumb { background: rgba(0,245,255,0.2); border-radius: 1px; }
+
+        .mode-toggle-pencil {
+            position: absolute; top: 22px; right: 24px;
+            font-size: 14px; cursor: pointer;
+            color: rgba(0,245,255,0.3);
+            transition: all 0.3s; user-select: none; z-index: 10;
+            font-family: var(--display-font);
+            letter-spacing: 2px;
+        }
+        .mode-toggle-pencil:hover { color: var(--accent); }
+        .mode-toggle-pencil.active { color: var(--accent); text-shadow: var(--neon-glow); }
+
+        .edit-exclusive-section {
+            display: none; margin-bottom: 24px;
+            background: rgba(0,245,255,0.02);
+            padding: 16px; border-radius: 2px;
+            border: 1px solid rgba(0,245,255,0.06);
+            animation: fadeIn 0.3s ease;
+        }
+        .section-title {
+            font-family: var(--display-font);
+            font-size: 9px; color: rgba(0,245,255,0.5);
+            margin-bottom: 16px; letter-spacing: 4px;
+            border-bottom: 1px solid rgba(0,245,255,0.08);
+            padding-bottom: 10px;
+        }
+
+        .setting-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .input-box { flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 5px; }
+        .input-box label { font-size: 9px; color: rgba(0,245,255,0.4); letter-spacing: 2px; font-family: var(--display-font); }
+        .input-box input, .input-box select {
+            padding: 8px 10px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(0,245,255,0.1);
+            border-radius: 2px; color: var(--text-main); font-size: 12px; outline: none;
+            transition: border 0.2s;
+            font-family: var(--font-family-set);
+        }
+        .input-box input:focus, .input-box select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 8px rgba(0,245,255,0.2);
+        }
+
+        /* ─── 트랙 노드 ─── */
+        .track-node {
+            display: flex; gap: 10px; align-items: center;
+            margin-bottom: 8px;
+            background: rgba(0,245,255,0.02);
+            padding: 14px 16px; border-radius: 2px;
+            border: 1px solid rgba(0,245,255,0.07);
+            border-left: 2px solid transparent;
+            position: relative; overflow: hidden;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: default;
+        }
+        .track-node::before {
+            content: '';
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, rgba(0,245,255,0) 0%, rgba(0,245,255,0.02) 100%);
+            pointer-events: none;
+        }
+        body:not(.edit-mode-active) .track-node:hover {
+            background: rgba(0,245,255,0.05);
+            border-left-color: rgba(0,245,255,0.4);
+            transform: translateX(4px);
+        }
+        body:not(.edit-mode-active) .track-node.playing-active {
+            background: rgba(0,245,255,0.07);
+            border-left-color: var(--accent);
+            box-shadow: 0 0 20px rgba(0,245,255,0.1), inset 0 0 15px rgba(0,245,255,0.05);
+        }
+
+        .track-number {
+            font-family: var(--display-font);
+            font-size: 9px; color: rgba(0,245,255,0.2);
+            width: 16px; text-align: center; flex-shrink: 0;
+        }
+        .track-node.playing-active .track-number { color: var(--accent); }
+
+        .track-node .t-pure-text-wrap {
+            flex: 1; display: flex; flex-direction: column; gap: 3px; overflow: hidden; z-index: 2;
+        }
+        .track-node .t-pure-title {
+            font-size: 13px; font-weight: 600; color: #e2e8f0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            letter-spacing: 0.5px;
+        }
+        .track-node .t-pure-artist {
+            font-size: 10px; color: rgba(177,151,252,0.6);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            letter-spacing: 1px;
+        }
+        .track-node.playing-active .t-pure-title { color: var(--accent); }
+        .track-node.playing-active .t-pure-artist { color: var(--text-sub); }
+
+        .track-node .t-name, .track-node .t-artist, .track-node .t-link { display: none; z-index: 2; }
+        .track-node .t-name { flex: 1.2; }
+        .track-node .t-artist { flex: 0.8; }
+        .track-node .t-link { flex: 1.8; }
+        .track-node input {
+            padding: 7px 9px; background: rgba(0,0,0,0.7);
+            border: 1px solid rgba(0,245,255,0.1); border-radius: 2px;
+            color: white; font-size: 12px; outline: none;
+        }
+
+        .btn-play-trigger {
+            background: none; border: none;
+            color: rgba(0,245,255,0.25); cursor: pointer;
+            font-size: 11px; padding: 6px 8px;
+            transition: all 0.2s; z-index: 2; outline: none;
+        }
+        .btn-play-trigger:hover { color: var(--accent); transform: scale(1.2); }
+        .track-node.playing-active .btn-play-trigger { color: var(--accent); }
+        .btn-delete-node {
+            background: none; border: none; color: rgba(255,45,107,0.4);
+            cursor: pointer; font-size: 11px; padding: 6px; display: none; z-index: 2;
+            transition: color 0.2s;
+        }
+        .btn-delete-node:hover { color: var(--cyber-pink); }
+
+        .btn-add {
+            background: transparent;
+            color: rgba(0,245,255,0.4);
+            border: 1px dashed rgba(0,245,255,0.15);
+            padding: 12px; width: 100%; border-radius: 2px;
+            cursor: pointer; font-size: 10px; display: none;
+            margin-top: 10px; letter-spacing: 3px;
+            font-family: var(--display-font);
+            transition: all 0.2s;
+        }
+        .btn-add:hover { background: rgba(0,245,255,0.04); border-color: rgba(0,245,255,0.3); color: var(--accent); }
+
+        input[type="file"] { display: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <canvas id="space-canvas"></canvas>
+
+    <div class="yt-hidden-player">
+        <div id="yt-player-core"></div>
+    </div>
+
+    <div id="gatekeeper">
+        <div class="auth-box">
+            <div class="warning-tag">⚠ RESTRICTED ACCESS ⚠</div>
+            <h2>NEBULA CYBER STAGE</h2>
+            <input type="password" id="pass-input" placeholder="ENTER ACCESS KEY" onkeypress="if(event.key==='Enter') verifyKey()">
+            <button class="auth-btn" onclick="verifyKey()">[ SYSTEM UNLOCK ]</button>
+            <div class="error-msg" id="error-txt">// ACCESS DENIED — 다시 확인해보렴</div>
+        </div>
+    </div>
+
+    <div id="main-stage">
+        <div class="phone-container">
+            <div class="phone-mockup">
+                <div class="phone-notch"></div>
+                <div class="phone-screen">
+                    <div class="phone-header" id="phone-playlist-name">MY PLAYLIST</div>
+
+                    <div class="album-art-zone" onclick="triggerImageUpload()">
+                        <span class="album-hint" id="upload-hint">COVER</span>
+                        <img id="cover-img" src="" style="display:none;">
+                    </div>
+                    <input type="file" id="image-file-picker" accept="image/*" onchange="loadCustomCover(this)">
+
+                    <div class="track-info-zone">
+                        <div id="display-title">SELECT TRACK</div>
+                        <div id="display-artist">— NEBULA SOUND —</div>
+                    </div>
+
+                    <div class="volume-container">
+                        <span class="volume-icon">◁</span>
+                        <input type="range" class="volume-slider" id="vol-control" min="0" max="100" value="70" oninput="adjustVolume(this.value)">
+                        <span class="volume-icon">▷</span>
+                    </div>
+
+                    <div class="playback-controls">
+                        <button class="play-btn" onclick="controlPlayback('prev')">⏮</button>
+                        <button class="play-btn" id="master-play-btn" onclick="togglePlayState()">▶</button>
+                        <button class="play-btn" onclick="controlPlayback('next')">⏭</button>
+                    </div>
+
+                    <div class="eq-zone idle" id="eq-zone">
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-dashboard">
+            <div class="mode-toggle-pencil" id="pencil-btn" onclick="toggleEditMode()" title="EDIT MODE">✦</div>
+
+            <div class="edit-exclusive-section" id="style-panel">
+                <div class="section-title">// SYSTEM CONFIG</div>
+                <div class="setting-row">
+                    <div class="input-box">
+                        <label>BG EFFECT</label>
+                        <select id="bg-effect-select" onchange="switchFxMode()">
+                            <option value="particle">NEBULA PARTICLE</option>
+                            <option value="glitch">CYBER GLITCH</option>
+                            <option value="matrix">MATRIX RAIN</option>
+                            <option value="pulse">NEON PULSE</option>
+                            <option value="starfield">STARFIELD DRIFT</option>
+                            <option value="scanwave">SCAN WAVE</option>
+                        </select>
+                    </div>
+                    <div class="input-box">
+                        <label>BG STYLE</label>
+                        <select id="bg-style-select" onchange="adjustBackground()">
+                            <option value="grad">GRADIENT</option>
+                            <option value="solid">SOLID</option>
+                            <option value="radial">RADIAL GLOW</option>
+                            <option value="diagonal">DIAGONAL STRIPE</option>
+                            <option value="mesh">CYBER MESH</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="input-box">
+                        <label>COLOR 1</label>
+                        <input type="color" id="color-picker-1" value="#04040a" onchange="adjustBackground()">
+                    </div>
+                    <div class="input-box" id="color-2-wrapper">
+                        <label>COLOR 2</label>
+                        <input type="color" id="color-picker-2" value="#0a0514" onchange="adjustBackground()">
+                    </div>
+                    <div class="input-box">
+                        <label>FONT</label>
+                        <select id="font-family-select" onchange="changeFont(this.value)">
+                            <option value="rajdhani">RAJDHANI</option>
+                            <option value="share-tech">SHARE TECH MONO</option>
+                            <option value="exo2">EXO 2</option>
+                            <option value="titillium">TITILLIUM WEB</option>
+                            <option value="nova-mono">NOVA MONO</option>
+                            <option value="vt323">VT323</option>
+                            <option value="audiowide">AUDIOWIDE</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="edit-exclusive-section" id="meta-panel">
+                <div class="section-title">// PLAYLIST CONFIG</div>
+                <div class="setting-row">
+                    <div class="input-box">
+                        <label>PLAYLIST NAME</label>
+                        <input type="text" id="playlist-title-input" value="MY PLAYLIST" oninput="syncPlaylistTitle()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title" style="border:none; margin-bottom:12px;">// TRACK LIST</div>
+
+            <div id="track-manager-zone">
+                <div class="track-node">
+                    <div class="track-number">01</div>
+                    <div class="t-pure-text-wrap">
+                        <span class="t-pure-title">우주 속의 몽환 소나타 (샘플)</span>
+                        <span class="t-pure-artist">KAMISHIRO RUI</span>
+                    </div>
+                    <input type="text" class="t-name" value="우주 속의 몽환 소나타 (샘플)" placeholder="곡 제목" oninput="syncPureText(this)">
+                    <input type="text" class="t-artist" value="Kamishiro Rui" placeholder="아티스트" oninput="syncPureText(this)">
+                    <input type="text" class="t-link" value="https://www.youtube.com/watch?v=dQw4w9WgXcQ" placeholder="유튜브 주소" oninput="saveAll()">
+                    <button class="btn-play-trigger" onclick="playSelectedTrack(this)">▶</button>
+                    <button class="btn-delete-node" onclick="removeTrackNode(this)">✕</button>
+                </div>
+            </div>
+
+            <button class="btn-add" id="add-track-btn" onclick="addNewTrackSlot()">+ ADD NEW TRACK</button>
+        </div>
+    </div>
+
+    
+    <script>
+        const SECRET_PASSTOKEN = "angiragoham";
+        const STORAGE_KEY = 'nebula_cyber_save_v1';
+        const IMAGE_DB_NAME = 'NebulaCoverDB';
+        const IMAGE_STORE_NAME = 'covers';
+        let ytPlayer = null;
+        let currentTrackElement = null;
+        let isEditMode = false;
+        let fxMode = 'particle';
+        let currentVolume = 70;
+        let isPlayerReady = false;
+        let pendingVideoId = null;
+        let isPlaying = false;
+        let eqAnimFrame = null;
+
+        // ─── [새로운 장치] 마우스 클릭 사운드 효과 공급용 엔진 ───
+        let audioCtx = null;
+        function playClickSound() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                osc.type = 'sine'; // 부드러운 전자기음 성향
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime); // 고음의 팅- 소리 (A5 노크음)
+                osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.08); // 빠르게 떨어지는 피치 고유값
+                
+                gainNode.gain.setValueAtTime(0.04, audioCtx.currentTime); // 청력 보호를 위해 적정 음량 유지
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.08); // 0.08초 동안 깔끔하게 소멸
+                
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch (e) { console.warn("오디오 이펙트 장치 실패:", e); }
+        }
+
+        // 전체 화면에서 상호작용 가능한 요소를 누르면 효과음 트리거
+        window.addEventListener('click', (e) => {
+            // 글자를 타이핑하는 Input 요소나 Select 박스를 누를 때는 소리가 나지 않게 차단해
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION') return;
+            playClickSound();
+        });
+
+        // ─── IndexedDB 데이터 관리 (이미지) ───
+        function getDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(IMAGE_DB_NAME, 1);
+                request.onupgradeneeded = e => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(IMAGE_STORE_NAME)) {
+                        db.createObjectStore(IMAGE_STORE_NAME);
+                    }
+                };
+                request.onsuccess = e => resolve(e.target.result);
+                request.onerror = e => reject(e.target.error);
+            });
+        }
+
+        async function saveCoverToDB(base64Data) {
+            try {
+                const db = await getDB();
+                const tx = db.transaction(IMAGE_STORE_NAME, 'readwrite');
+                tx.objectStore(IMAGE_STORE_NAME).put(base64Data, 'current_cover');
+            } catch (e) { console.warn('DB 저장 실패:', e); }
+        }
+
+        async function loadCoverFromDB() {
+            try {
+                const db = await getDB();
+                const tx = db.transaction(IMAGE_STORE_NAME, 'readonly');
+                const req = tx.objectStore(IMAGE_STORE_NAME).get('current_cover');
+                req.onsuccess = () => {
+                    if (req.result) {
+                        document.getElementById('cover-img').src = req.result;
+                        document.getElementById('cover-img').style.display = 'block';
+                        document.getElementById('upload-hint').style.display = 'none';
+                    }
+                };
+            } catch (e) { console.warn('DB 불러오기 실패:', e); }
+        }
+
+        // ─── 로컬스토리지 저장 / 불러오기 ───
+        function saveAll() {
+            const tracks = [];
+            document.querySelectorAll('.track-node').forEach(node => {
+                tracks.push({
+                    name: node.querySelector('.t-name').value,
+                    artist: node.querySelector('.t-artist').value,
+                    link: node.querySelector('.t-link').value
+                });
+            });
+            const data = {
+                tracks,
+                playlistTitle: document.getElementById('playlist-title-input').value,
+                bgEffect: document.getElementById('bg-effect-select').value,
+                bgStyle: document.getElementById('bg-style-select').value,
+                color1: document.getElementById('color-picker-1').value,
+                color2: document.getElementById('color-picker-2').value,
+                font: document.getElementById('font-family-select').value
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function loadSaved() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            try {
+                const data = JSON.parse(raw);
+                if (data.tracks && data.tracks.length > 0) {
+                    const zone = document.getElementById('track-manager-zone');
+                    zone.innerHTML = '';
+                    data.tracks.forEach(t => {
+                        const node = document.createElement('div');
+                        node.className = 'track-node';
+                        node.innerHTML = `
+                            <div class="track-number">--</div>
+                            <div class="t-pure-text-wrap" style="display:flex">
+                                <span class="t-pure-title">${escHtml(t.name) || 'UNTITLED'}</span>
+                                <span class="t-pure-artist">${escHtml((t.artist||'UNKNOWN').toUpperCase())}</span>
+                            </div>
+                            <input type="text" class="t-name" value="${escAttr(t.name)}" placeholder="곡 제목" style="display:none" oninput="syncPureText(this)">
+                            <input type="text" class="t-artist" value="${escAttr(t.artist)}" placeholder="아티스트" style="display:none" oninput="syncPureText(this)">
+                            <input type="text" class="t-link" value="${escAttr(t.link)}" placeholder="유튜브 주소" style="display:none" oninput="saveAll()">
+                            <button class="btn-play-trigger" onclick="playSelectedTrack(this)">▶</button>
+                            <button class="btn-delete-node" style="display:none" onclick="removeTrackNode(this)">✕</button>
+                        `;
+                        zone.appendChild(node);
+                    });
+                    updateTrackNumbers();
+                }
+                if (data.playlistTitle) {
+                    document.getElementById('playlist-title-input').value = data.playlistTitle;
+                    document.getElementById('phone-playlist-name').innerText = data.playlistTitle;
+                }
+                if (data.bgEffect) {
+                    document.getElementById('bg-effect-select').value = data.bgEffect;
+                    fxMode = data.bgEffect;
+                }
+                if (data.bgStyle) document.getElementById('bg-style-select').value = data.bgStyle;
+                if (data.color1) document.getElementById('color-picker-1').value = data.color1;
+                if (data.color2) document.getElementById('color-picker-2').value = data.color2;
+                if (data.bgStyle || data.color1 || data.color2) adjustBackground();
+                if (data.font) {
+                    document.getElementById('font-family-select').value = data.font;
+                    changeFont(data.font);
+                }
+            } catch(e) { console.warn('불러오기 실패:', e); }
+        }
+
+        function escHtml(str) {
+            return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+        function escAttr(str) {
+            return (str||'').replace(/"/g,'&quot;');
+        }
+
+        window.onload = () => { initSpaceFX(); loadSaved(); loadCoverFromDB(); };
+
+        // ─── 이퀄라이저 애니메이션 ───
+        const eqZone = document.getElementById('eq-zone');
+        const eqBars = document.querySelectorAll('.eq-bar');
+        const EQ_MAX_HEIGHT = 46;
+        const EQ_MIN_HEIGHT = 4;
+
+        const barStates = Array.from(eqBars).map(() => ({
+            current: EQ_MIN_HEIGHT, target: EQ_MIN_HEIGHT, velocity: 0
+        }));
+
+        function animateEQ() {
+            if (!isPlaying) return;
+            barStates.forEach((state, i) => {
+                if (Math.random() < 0.08) {
+                    state.target = EQ_MIN_HEIGHT + Math.random() * (EQ_MAX_HEIGHT - EQ_MIN_HEIGHT);
+                }
+                const spring = 0.18;
+                const damping = 0.72;
+                state.velocity += (state.target - state.current) * spring;
+                state.velocity *= damping;
+                state.current += state.velocity;
+                state.current = Math.max(EQ_MIN_HEIGHT, Math.min(EQ_MAX_HEIGHT, state.current));
+                eqBars[i].style.height = state.current + 'px';
+            });
+            eqAnimFrame = requestAnimationFrame(animateEQ);
+        }
+
+        function startEQ() {
+            isPlaying = true;
+            eqZone.classList.remove('idle');
+            if (!eqAnimFrame) animateEQ();
+        }
+
+        function stopEQ() {
+            isPlaying = false;
+            eqZone.classList.add('idle');
+            if (eqAnimFrame) { cancelAnimationFrame(eqAnimFrame); eqAnimFrame = null; }
+            barStates.forEach((state, i) => {
+                state.current = EQ_MIN_HEIGHT;
+                state.target = EQ_MIN_HEIGHT;
+                state.velocity = 0;
+                eqBars[i].style.height = EQ_MIN_HEIGHT + 'px';
+            });
+        }
+
+        // ─── 유튜브 API 동적 로드 (CosmicViewer 방식) ───
+        const ytTag = document.createElement("script");
+        ytTag.src = "https://www.youtube.com/iframe_api";
+        const firstScript = document.getElementsByTagName("script")[0];
+        firstScript.parentNode.insertBefore(ytTag, firstScript);
+
+        // ─── 유튜브 플레이어 초기화 ───
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('yt-player-core', {
+                
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            isPlayerReady = true;
+            ytPlayer.setVolume(currentVolume);
+            if (pendingVideoId) {
+                ytPlayer.loadVideoById({ videoId: pendingVideoId, startSeconds: 0 });
+                ytPlayer.setVolume(currentVolume);
+                ytPlayer.playVideo();
+                pendingVideoId = null;
+            }
+        }
+
+        function onPlayerStateChange(event) {
+            const btn = document.getElementById('master-play-btn');
+            if (event.data === YT.PlayerState.PLAYING) {
+                btn.innerHTML = '⏸';
+                document.getElementById('display-title').classList.add('playing');
+                startEQ();
+            } else if (event.data === YT.PlayerState.PAUSED) {
+                btn.innerHTML = '▶';
+                document.getElementById('display-title').classList.remove('playing');
+                stopEQ();
+            } else if (event.data === YT.PlayerState.ENDED) {
+                btn.innerHTML = '▶';
+                document.getElementById('display-title').classList.remove('playing');
+                stopEQ();
+                controlPlayback('next');
+            }
+        }
+
+        // ─── 인증 ───
+        function verifyKey() {
+            const userInput = document.getElementById('pass-input').value.trim().toLowerCase();
+            if (userInput === SECRET_PASSTOKEN) {
+                const gate = document.getElementById('gatekeeper');
+                gate.style.opacity = '0';
+                setTimeout(() => {
+                    gate.style.display = 'none';
+                    const stage = document.getElementById('main-stage');
+                    stage.style.display = 'flex';
+                    setTimeout(() => stage.style.opacity = '1', 50);
+                }, 800);
+            } else {
+                document.getElementById('error-txt').style.display = 'block';
+                document.getElementById('pass-input').style.borderColor = 'var(--cyber-pink)';
+                setTimeout(() => document.getElementById('pass-input').style.borderColor = '', 1000);
+            }
+        }
+
+        // ─── 편집 모드 ───
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            document.body.classList.toggle('edit-mode-active', isEditMode);
+            document.getElementById('pencil-btn').classList.toggle('active', isEditMode);
+            document.getElementById('style-panel').style.display = isEditMode ? 'block' : 'none';
+            document.getElementById('meta-panel').style.display = isEditMode ? 'block' : 'none';
+            document.getElementById('add-track-btn').style.display = isEditMode ? 'block' : 'none';
+
+            document.querySelectorAll('.t-pure-text-wrap').forEach(w => w.style.display = isEditMode ? 'none' : 'flex');
+            document.querySelectorAll('.t-name').forEach(i => i.style.display = isEditMode ? 'block' : 'none');
+            document.querySelectorAll('.t-artist').forEach(i => i.style.display = isEditMode ? 'block' : 'none');
+            document.querySelectorAll('.t-link').forEach(i => i.style.display = isEditMode ? 'block' : 'none');
+            document.querySelectorAll('.btn-delete-node').forEach(b => b.style.display = isEditMode ? 'block' : 'none');
+        }
+
+        function syncPureText(input) {
+            const node = input.parentElement;
+            if (input.classList.contains('t-name')) node.querySelector('.t-pure-title').innerText = input.value || "UNTITLED";
+            else if (input.classList.contains('t-artist')) node.querySelector('.t-pure-artist').innerText = (input.value || "UNKNOWN").toUpperCase();
+            saveAll();
+        }
+
+        function adjustBackground() {
+            const style = document.getElementById('bg-style-select').value;
+            const c1 = document.getElementById('color-picker-1').value;
+            const c2 = document.getElementById('color-picker-2').value;
+            const needsC2 = ['grad', 'radial', 'diagonal', 'mesh'].includes(style);
+            document.getElementById('color-2-wrapper').style.opacity = needsC2 ? '1' : '0';
+            let bg;
+            if (style === 'grad')     bg = `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`;
+            else if (style === 'solid')    bg = c1;
+            else if (style === 'radial')   bg = `radial-gradient(ellipse at center, ${c2} 0%, ${c1} 70%)`;
+            else if (style === 'diagonal') bg = `repeating-linear-gradient(45deg, ${c1} 0px, ${c1} 18px, ${c2} 18px, ${c2} 36px)`;
+            else if (style === 'mesh')     bg = `repeating-linear-gradient(0deg, transparent, transparent 38px, ${c2}22 38px, ${c2}22 40px), repeating-linear-gradient(90deg, transparent, transparent 38px, ${c2}22 38px, ${c2}22 40px), ${c1}`;
+            document.body.style.background = bg;
+            saveAll();
+        }
+
+        function changeFont(val) {
+            const fontMap = {
+                'rajdhani':   { body: "'Rajdhani', 'Malgun Gothic', sans-serif",   display: "'Orbitron', monospace" },
+                'share-tech': { body: "'Share Tech Mono', monospace",               display: "'Orbitron', monospace" },
+                'exo2':       { body: "'Exo 2', 'Malgun Gothic', sans-serif",       display: "'Exo 2', sans-serif" },
+                'titillium':  { body: "'Titillium Web', 'Malgun Gothic', sans-serif", display: "'Titillium Web', sans-serif" },
+                'nova-mono':  { body: "'Nova Mono', monospace",                     display: "'Nova Mono', monospace" },
+                'vt323':      { body: "'VT323', monospace",                         display: "'VT323', monospace" },
+                'audiowide':  { body: "'Audiowide', 'Malgun Gothic', sans-serif",   display: "'Audiowide', sans-serif" }
+            };
+            const chosen = fontMap[val] || fontMap['rajdhani'];
+            document.documentElement.style.setProperty('--font-family-set', chosen.body);
+            document.documentElement.style.setProperty('--display-font', chosen.display);
+            saveAll();
+        }
+        function switchFxMode() { fxMode = document.getElementById('bg-effect-select').value; saveAll(); }
+        function syncPlaylistTitle() {
+            document.getElementById('phone-playlist-name').innerText = document.getElementById('playlist-title-input').value || "MY PLAYLIST";
+            saveAll();
+        }
+
+        // ─── 트랙 노드 ───
+        function updateTrackNumbers() {
+            document.querySelectorAll('.track-node').forEach((node, i) => {
+                const num = node.querySelector('.track-number');
+                if (num) num.innerText = String(i + 1).padStart(2, '0');
+            });
+        }
+
+        function addNewTrackSlot() {
+            const container = document.getElementById('track-manager-zone');
+            const node = document.createElement('div');
+            node.className = 'track-node';
+            const dText = isEditMode ? 'none' : 'flex';
+            const dInput = isEditMode ? 'block' : 'none';
+            node.innerHTML = `
+                <div class="track-number">--</div>
+                <div class="t-pure-text-wrap" style="display:${dText}">
+                    <span class="t-pure-title">NEW TRACK</span>
+                    <span class="t-pure-artist">UNKNOWN</span>
+                </div>
+                <input type="text" class="t-name" value="NEW TRACK" placeholder="곡 제목" style="display:${dInput}" oninput="syncPureText(this)">
+                <input type="text" class="t-artist" value="Unknown Artist" placeholder="아티스트" style="display:${dInput}" oninput="syncPureText(this)">
+                <input type="text" class="t-link" placeholder="유튜브 주소" style="display:${dInput}" oninput="saveAll()">
+                <button class="btn-play-trigger" onclick="playSelectedTrack(this)">▶</button>
+                <button class="btn-delete-node" style="display:${dInput}" onclick="removeTrackNode(this)">✕</button>
+            `;
+            container.appendChild(node);
+            updateTrackNumbers();
+            saveAll();
+        }
+
+        function removeTrackNode(btn) {
+            const node = btn.parentElement;
+            const wasPlaying = node.classList.contains('playing-active');
+            node.remove();
+            updateTrackNumbers();
+            saveAll();
+            
+            if (wasPlaying) {
+                const allNodes = document.querySelectorAll('.track-node');
+                if (allNodes.length > 0) {
+                    playSelectedTrack(allNodes[0].querySelector('.btn-play-trigger'));
+                } else {
+                    if (isPlayerReady && ytPlayer) ytPlayer.stopVideo();
+                    document.getElementById('display-title').innerText = 'SELECT TRACK';
+                    document.getElementById('display-artist').innerText = '— NEBULA SOUND —';
+                    currentTrackElement = null;
+                    stopEQ();
+                }
+            }
+        }
+
+        function extractYoutubeId(url) {
+            if (!url) return null;
+            const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        function playSelectedTrack(btn) {
+            const node = btn.parentElement;
+            const title = node.querySelector('.t-name').value || "UNTITLED";
+            const artist = (node.querySelector('.t-artist').value || "UNKNOWN").toUpperCase();
+            const videoId = extractYoutubeId(node.querySelector('.t-link').value);
+
+            if (!videoId) {
+                alert("유튜브 주소 형식을 다시 확인해 주렴!\n예) https://www.youtube.com/watch?v=XXXXXXXXXXX");
+                return;
+            }
+
+            document.querySelectorAll('.track-node').forEach(n => n.classList.remove('playing-active'));
+            node.classList.add('playing-active');
+            currentTrackElement = node;
+
+            document.getElementById('display-title').innerText = title;
+            document.getElementById('display-artist').innerText = '— ' + artist + ' —';
+
+            if (isPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+                ytPlayer.loadVideoById({ videoId, startSeconds: 0 });
+                ytPlayer.setVolume(currentVolume);
+                ytPlayer.playVideo();
+            } else {
+                pendingVideoId = videoId;
+                startEQ();
+            }
+        }
+
+        function togglePlayState() {
+            if (!isPlayerReady || !ytPlayer) return;
+            const state = ytPlayer.getPlayerState();
+            if (state === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+            else {
+                if (!currentTrackElement) {
+                    const firstNode = document.querySelector('.track-node');
+                    if (firstNode) {
+                        playSelectedTrack(firstNode.querySelector('.btn-play-trigger'));
+                        return;
+                    }
+                }
+                ytPlayer.playVideo();
+            }
+        }
+
+        function adjustVolume(val) {
+            currentVolume = val;
+            if (isPlayerReady && ytPlayer) ytPlayer.setVolume(val);
+        }
+
+        function controlPlayback(direction) {
+            const allNodes = Array.from(document.querySelectorAll('.track-node'));
+            if (allNodes.length === 0) return;
+            
+            let idx = 0;
+            if (currentTrackElement) {
+                idx = allNodes.indexOf(currentTrackElement);
+                idx = direction === 'next' ? (idx + 1) % allNodes.length : (idx - 1 + allNodes.length) % allNodes.length;
+            }
+            playSelectedTrack(allNodes[idx].querySelector('.btn-play-trigger'));
+        }
+
+        function triggerImageUpload() { document.getElementById('image-file-picker').click(); }
+        function loadCustomCover(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = async e => {
+                    const base64Data = e.target.result;
+                    document.getElementById('cover-img').src = base64Data;
+                    document.getElementById('cover-img').style.display = 'block';
+                    document.getElementById('upload-hint').style.display = 'none';
+                    await saveCoverToDB(base64Data);
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // ─── 배경 파티클 ───
+        function initSpaceFX() {
+            const canvas = document.getElementById('space-canvas');
+            const ctx = canvas.getContext('2d');
+            let W = canvas.width = window.innerWidth;
+            let H = canvas.height = window.innerHeight;
+
+            const particles = Array.from({ length: 60 }, () => ({
+                x: Math.random() * W, y: Math.random() * H,
+                r: Math.random() * 1.5 + 0.3,
+                d: Math.random() * 0.15 + 0.03,
+                o: Math.random()
+            }));
+
+            const matrixCols = Math.floor(W / 16);
+            const matrixDrops = Array.from({ length: matrixCols }, () => Math.random() * -50);
+            const matrixChars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノ';
+
+            const pulseRings = Array.from({ length: 5 }, (_, i) => ({
+                x: W / 2, y: H / 2, r: i * 90 + 40, maxR: 300 + i * 80,
+                speed: 0.6 + i * 0.2, alpha: 0
+            }));
+
+            const stars = Array.from({ length: 120 }, () => ({
+                x: Math.random() * W, y: Math.random() * H,
+                z: Math.random() * W,
+                pz: 0
+            }));
+
+            let scanY = 0;
+            let scanDir = 1;
+
+            function draw() {
+                const mode = fxMode;
+                ctx.clearRect(0, 0, W, H);
+
+                if (mode === 'particle') {
+                    particles.forEach(p => {
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(0, 245, 255, ${p.o * 0.5})`;
+                        ctx.fill();
+                        p.y += p.d; p.x += p.d * 0.05;
+                        p.o = 0.3 + Math.sin(Date.now() * 0.001 + p.x) * 0.3;
+                        if (p.y > H) Object.assign(p, { x: Math.random() * W, y: 0 });
+                    });
+
+                } else if (mode === 'glitch') {
+                    if (Math.random() > 0.5) {
+                        ctx.fillStyle = `rgba(0, 245, 255, ${Math.random() * 0.06})`;
+                        for (let i = 0; i < 3; i++) {
+                            ctx.fillRect(0, Math.random() * H, W, Math.random() * 8 + 1);
+                        }
+                    }
+                    if (Math.random() > 0.9) {
+                        ctx.fillStyle = `rgba(255, 45, 107, ${Math.random() * 0.08})`;
+                        ctx.fillRect(Math.random() * W, Math.random() * H, Math.random() * 200, Math.random() * 3);
+                    }
+
+                } else if (mode === 'matrix') {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                    ctx.fillRect(0, 0, W, H);
+                    ctx.fillStyle = 'rgba(0, 245, 255, 0.55)';
+                    ctx.font = '13px monospace';
+                    for (let i = 0; i < matrixDrops.length; i++) {
+                        const ch = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                        const x = i * 16;
+                        const y = matrixDrops[i] * 16;
+                        const alpha = 0.15 + Math.random() * 0.45;
+                        ctx.fillStyle = `rgba(0, 245, 255, ${alpha})`;
+                        ctx.fillText(ch, x, y);
+                        if (y > H && Math.random() > 0.975) matrixDrops[i] = 0;
+                        matrixDrops[i] += 0.4;
+                    }
+
+                } else if (mode === 'pulse') {
+                    pulseRings.forEach((ring, idx) => {
+                        ring.r += ring.speed;
+                        ring.alpha = Math.max(0, 0.4 - ring.r / ring.maxR);
+                        if (ring.r > ring.maxR) {
+                            ring.r = idx * 40;
+                            ring.alpha = 0.4;
+                        }
+                        ctx.beginPath();
+                        ctx.arc(ring.x, ring.y, ring.r, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(124, 58, 237, ${ring.alpha})`;
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.arc(ring.x, ring.y, ring.r * 0.7, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(255, 45, 107, ${ring.alpha * 0.4})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    });
+
+                } else if (mode === 'starfield') {
+                    const cx = W / 2, cy = H / 2;
+                    stars.forEach(s => {
+                        s.pz = s.z;
+                        s.z -= 3;
+                        if (s.z <= 0) { s.x = Math.random() * W; s.y = Math.random() * H; s.z = W; s.pz = s.z; }
+                        const sx = (s.x - cx) / s.z * W + cx;
+                        const sy = (s.y - cy) / s.z * H + cy;
+                        const px = (s.x - cx) / s.pz * W + cx;
+                        const py = (s.y - cy) / s.pz * H + cy;
+                        const size = Math.max(0.3, (1 - s.z / W) * 2.5);
+                        const alpha = (1 - s.z / W) * 0.8;
+                        ctx.strokeStyle = `rgba(0, 245, 255, ${alpha})`;
+                        ctx.lineWidth = size;
+                        ctx.beginPath();
+                        ctx.moveTo(px, py);
+                        ctx.lineTo(sx, sy);
+                        ctx.stroke();
+                    });
+
+                } else if (mode === 'scanwave') {
+                    scanY += scanDir * 1.2;
+                    if (scanY > H || scanY < 0) scanDir *= -1;
+                    const grad = ctx.createLinearGradient(0, scanY - 40, 0, scanY + 40);
+                    grad.addColorStop(0, 'rgba(0,245,255,0)');
+                    grad.addColorStop(0.5, 'rgba(0,245,255,0.06)');
+                    grad.addColorStop(1, 'rgba(0,245,255,0)');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, scanY - 40, W, 80);
+                    ctx.strokeStyle = 'rgba(0,245,255,0.25)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(0, scanY);
+                    ctx.lineTo(W, scanY);
+                    ctx.stroke();
+                    if (Math.random() > 0.85) {
+                        ctx.strokeStyle = `rgba(124,58,237,${Math.random() * 0.1})`;
+                        ctx.lineWidth = 0.5;
+                        for (let i = 0; i < 4; i++) {
+                            const nx = Math.random() * W;
+                            ctx.beginPath();
+                            ctx.moveTo(nx, 0);
+                            ctx.lineTo(nx, H);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                requestAnimationFrame(draw);
+            }
+            draw();
+            window.addEventListener('resize', () => {
+                W = canvas.width = window.innerWidth;
+                H = canvas.height = window.innerHeight;
+                pulseRings.forEach(r => { r.x = W / 2; r.y = H / 2; });
+            });
+        }
+    </script>
+</body>
+</html>
