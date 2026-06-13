@@ -73,7 +73,7 @@
         #gatekeeper {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #020205;
-            display: none; justify-content: center; align-items: center;
+            display: flex; justify-content: center; align-items: center;
             z-index: 9999; transition: opacity 0.8s ease;
         }
         .auth-box {
@@ -139,7 +139,7 @@
 
         /* ─── 메인 스테이지 ─── */
         #main-stage {
-            display: flex; opacity: 1;
+            display: none; opacity: 0;
             width: 94%; max-width: 1080px;
             gap: 36px;
             justify-content: center; align-items: center;
@@ -498,59 +498,49 @@
         }
         .btn-add:hover { background: rgba(0,245,255,0.04); border-color: rgba(0,245,255,0.3); color: var(--accent); }
 
-        /* ─── 사이버펑크 커서 ─── */
-        * { cursor: none !important; }
-        #cyber-cursor {
-            position: fixed;
-            width: 10px; height: 10px;
-            background: var(--accent);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 99999;
-            transform: translate(-50%, -50%);
-            transition: width 0.15s, height 0.15s, background 0.15s;
-            box-shadow: 0 0 8px var(--accent), 0 0 20px rgba(0,245,255,0.5);
-            mix-blend-mode: screen;
-        }
-        #cyber-cursor-ring {
-            position: fixed;
-            width: 30px; height: 30px;
-            border: 1px solid rgba(0,245,255,0.6);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 99998;
-            transform: translate(-50%, -50%);
-            transition: transform 0.08s linear, width 0.2s, height 0.2s, border-color 0.2s;
-            box-shadow: 0 0 6px rgba(0,245,255,0.2);
-        }
-        #cyber-cursor.clicking {
-            width: 6px; height: 6px;
-            background: var(--cyber-pink);
-            box-shadow: 0 0 12px var(--cyber-pink);
-        }
-        #cyber-cursor-ring.clicking {
-            width: 42px; height: 42px;
-            border-color: var(--cyber-pink);
-        }
-        .cursor-trail {
-            position: fixed;
-            width: 4px; height: 4px;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 99997;
-            transform: translate(-50%, -50%);
-            background: var(--accent);
-            opacity: 0;
-        }
-
         input[type="file"] { display: none; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ─── 백업 버튼 ─── */
+        .backup-section {
+            display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap;
+        }
+        .btn-backup {
+            flex: 1; min-width: 100px;
+            padding: 10px 8px;
+            background: transparent;
+            border: 1px solid rgba(0,245,255,0.2);
+            color: rgba(0,245,255,0.5);
+            font-family: var(--display-font);
+            font-size: 9px; letter-spacing: 2px;
+            cursor: pointer; border-radius: 2px;
+            transition: all 0.2s;
+        }
+        .btn-backup:hover {
+            background: rgba(0,245,255,0.06);
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 10px rgba(0,245,255,0.15);
+        }
+        .btn-backup.import-btn {
+            border-color: rgba(124,58,237,0.3);
+            color: rgba(124,58,237,0.6);
+        }
+        .btn-backup.import-btn:hover {
+            background: rgba(124,58,237,0.08);
+            border-color: var(--accent2);
+            color: var(--text-sub);
+            box-shadow: 0 0 10px rgba(124,58,237,0.2);
+        }
+        .backup-label {
+            font-family: var(--display-font);
+            font-size: 9px; color: rgba(0,245,255,0.3);
+            letter-spacing: 3px; margin-top: 14px; margin-bottom: 6px;
+        }
     </style>
 </head>
 <body>
     <canvas id="space-canvas"></canvas>
-    <div id="cyber-cursor"></div>
-    <div id="cyber-cursor-ring"></div>
 
     <div class="yt-hidden-player">
         <div id="yt-player-core"></div>
@@ -679,16 +669,34 @@
             <div class="section-title" style="border:none; margin-bottom:12px;">// TRACK LIST</div>
 
             <div id="track-manager-zone">
+                <div class="track-node">
+                    <div class="track-number">01</div>
+                    <div class="t-pure-text-wrap">
+                        <span class="t-pure-title">우주 속의 몽환 소나타 (샘플)</span>
+                        <span class="t-pure-artist">KAMISHIRO RUI</span>
+                    </div>
+                    <input type="text" class="t-name" value="우주 속의 몽환 소나타 (샘플)" placeholder="곡 제목" oninput="syncPureText(this)">
+                    <input type="text" class="t-artist" value="Kamishiro Rui" placeholder="아티스트" oninput="syncPureText(this)">
+                    <input type="text" class="t-link" value="https://www.youtube.com/watch?v=dQw4w9WgXcQ" placeholder="유튜브 주소" oninput="saveAll()">
+                    <button class="btn-play-trigger" onclick="playSelectedTrack(this)">▶</button>
+                    <button class="btn-delete-node" onclick="removeTrackNode(this)">✕</button>
+                </div>
             </div>
 
             <button class="btn-add" id="add-track-btn" onclick="addNewTrackSlot()">+ ADD NEW TRACK</button>
+
+            <div class="backup-label" id="backup-section-label" style="display:none;">// DATA BACKUP</div>
+            <div class="backup-section" id="backup-section-btns" style="display:none;">
+                <button class="btn-backup" onclick="exportPlaylist()">⬇ EXPORT JSON</button>
+                <button class="btn-backup import-btn" onclick="document.getElementById('import-file-picker').click()">⬆ IMPORT JSON</button>
+            </div>
+            <input type="file" id="import-file-picker" accept=".json" onchange="importPlaylist(this)">
         </div>
     </div>
 
     
     <script>
         const SECRET_PASSTOKEN = "angiragoham";
-        // 각 브라우저마다 독립적으로 저장됨 (친구들끼리 데이터 안 섞임)
         const STORAGE_KEY = 'nebula_cyber_save_v1';
         const IMAGE_DB_NAME = 'NebulaCoverDB';
         const IMAGE_STORE_NAME = 'covers';
@@ -852,6 +860,61 @@
 
         window.onload = () => { initSpaceFX(); loadSaved(); loadCoverFromDB(); };
 
+        // ─── EXPORT: 플리 데이터를 JSON 파일로 저장 ───
+        function exportPlaylist() {
+            const tracks = [];
+            document.querySelectorAll('.track-node').forEach(node => {
+                tracks.push({
+                    name: node.querySelector('.t-name').value,
+                    artist: node.querySelector('.t-artist').value,
+                    link: node.querySelector('.t-link').value
+                });
+            });
+            const data = {
+                version: 1,
+                playlistTitle: document.getElementById('playlist-title-input').value,
+                bgEffect: document.getElementById('bg-effect-select').value,
+                bgStyle: document.getElementById('bg-style-select').value,
+                color1: document.getElementById('color-picker-1').value,
+                color2: document.getElementById('color-picker-2').value,
+                font: document.getElementById('font-family-select').value,
+                tracks
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const title = (data.playlistTitle || 'nebula_playlist').replace(/\s+/g, '_');
+            a.download = title + '_backup.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ─── IMPORT: JSON 파일에서 플리 데이터 복원 ───
+        function importPlaylist(input) {
+            if (!input.files || !input.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data.tracks || !Array.isArray(data.tracks)) {
+                        alert('올바른 백업 파일이 아니야!');
+                        return;
+                    }
+                    // localStorage에 저장
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                    // 화면 반영
+                    loadSaved();
+                    alert('✓ 불러오기 완료! 트랙 ' + data.tracks.length + '개 복원됨');
+                } catch(err) {
+                    alert('파일 읽기 실패: ' + err.message);
+                }
+            };
+            reader.readAsText(input.files[0]);
+            // 같은 파일 다시 선택할 수 있게 초기화
+            input.value = '';
+        }
+
         // ─── 이퀄라이저 애니메이션 ───
         const eqZone = document.getElementById('eq-zone');
         const eqBars = document.querySelectorAll('.eq-bar');
@@ -970,6 +1033,8 @@
             document.getElementById('style-panel').style.display = isEditMode ? 'block' : 'none';
             document.getElementById('meta-panel').style.display = isEditMode ? 'block' : 'none';
             document.getElementById('add-track-btn').style.display = isEditMode ? 'block' : 'none';
+            document.getElementById('backup-section-label').style.display = isEditMode ? 'block' : 'none';
+            document.getElementById('backup-section-btns').style.display = isEditMode ? 'flex' : 'none';
 
             document.querySelectorAll('.t-pure-text-wrap').forEach(w => w.style.display = isEditMode ? 'none' : 'flex');
             document.querySelectorAll('.t-name').forEach(i => i.style.display = isEditMode ? 'block' : 'none');
@@ -980,20 +1045,8 @@
 
         function syncPureText(input) {
             const node = input.parentElement;
-            if (input.classList.contains('t-name')) {
-                const newTitle = input.value || "UNTITLED";
-                node.querySelector('.t-pure-title').innerText = newTitle;
-                // 현재 재생 중인 트랙이면 폰 화면도 즉시 업데이트
-                if (node.classList.contains('playing-active')) {
-                    document.getElementById('display-title').innerText = newTitle;
-                }
-            } else if (input.classList.contains('t-artist')) {
-                const newArtist = (input.value || "UNKNOWN").toUpperCase();
-                node.querySelector('.t-pure-artist').innerText = newArtist;
-                if (node.classList.contains('playing-active')) {
-                    document.getElementById('display-artist').innerText = '— ' + newArtist + ' —';
-                }
-            }
+            if (input.classList.contains('t-name')) node.querySelector('.t-pure-title').innerText = input.value || "UNTITLED";
+            else if (input.classList.contains('t-artist')) node.querySelector('.t-pure-artist').innerText = (input.value || "UNKNOWN").toUpperCase();
             saveAll();
         }
 
@@ -1320,120 +1373,6 @@
                 pulseRings.forEach(r => { r.x = W / 2; r.y = H / 2; });
             });
         }
-        // ─── 사이버펑크 커서 이펙트 ───
-        (function() {
-            const cursor = document.getElementById('cyber-cursor');
-            const ring = document.getElementById('cyber-cursor-ring');
-            let mouseX = 0, mouseY = 0;
-            let ringX = 0, ringY = 0;
-            const TRAIL_COUNT = 8;
-
-            // 트레일 점들 생성
-            const trails = Array.from({ length: TRAIL_COUNT }, () => {
-                const el = document.createElement('div');
-                el.className = 'cursor-trail';
-                document.body.appendChild(el);
-                return { el, x: 0, y: 0 };
-            });
-
-            // 마우스 위치 추적
-            document.addEventListener('mousemove', e => {
-                mouseX = e.clientX;
-                mouseY = e.clientY;
-                cursor.style.left = mouseX + 'px';
-                cursor.style.top = mouseY + 'px';
-
-                // 파티클 이펙트 (빠르게 움직일 때)
-                if (Math.random() > 0.6) spawnParticle(mouseX, mouseY);
-            });
-
-            // 클릭 이펙트
-            document.addEventListener('mousedown', () => {
-                cursor.classList.add('clicking');
-                ring.classList.add('clicking');
-                spawnClickBurst(mouseX, mouseY);
-            });
-            document.addEventListener('mouseup', () => {
-                cursor.classList.remove('clicking');
-                ring.classList.remove('clicking');
-            });
-
-            // 링 부드럽게 따라오기
-            function animateRing() {
-                ringX += (mouseX - ringX) * 0.12;
-                ringY += (mouseY - ringY) * 0.12;
-                ring.style.left = ringX + 'px';
-                ring.style.top = ringY + 'px';
-
-                // 트레일 업데이트
-                let prevX = mouseX, prevY = mouseY;
-                trails.forEach((t, i) => {
-                    const delay = 0.08 + i * 0.06;
-                    t.x += (prevX - t.x) * delay;
-                    t.y += (prevY - t.y) * delay;
-                    t.el.style.left = t.x + 'px';
-                    t.el.style.top = t.y + 'px';
-                    const alpha = (1 - i / TRAIL_COUNT) * 0.35;
-                    const size = 4 - i * 0.3;
-                    t.el.style.opacity = alpha;
-                    t.el.style.width = size + 'px';
-                    t.el.style.height = size + 'px';
-                    prevX = t.x; prevY = t.y;
-                });
-
-                requestAnimationFrame(animateRing);
-            }
-            animateRing();
-
-            // 클릭 시 방사형 버스트 파티클
-            function spawnClickBurst(x, y) {
-                for (let i = 0; i < 8; i++) {
-                    const p = document.createElement('div');
-                    p.style.cssText = `
-                        position:fixed; width:3px; height:3px; border-radius:50%;
-                        background:${Math.random() > 0.5 ? 'var(--accent)' : 'var(--cyber-pink)'};
-                        left:${x}px; top:${y}px;
-                        pointer-events:none; z-index:99996;
-                        transform:translate(-50%,-50%);
-                        box-shadow: 0 0 4px currentColor;
-                    `;
-                    document.body.appendChild(p);
-                    const angle = (i / 8) * Math.PI * 2;
-                    const dist = 20 + Math.random() * 20;
-                    const tx = Math.cos(angle) * dist;
-                    const ty = Math.sin(angle) * dist;
-                    p.animate([
-                        { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
-                        { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0)`, opacity: 0 }
-                    ], { duration: 400, easing: 'ease-out' }).onfinish = () => p.remove();
-                }
-            }
-
-            // 이동 중 잔광 파티클
-            function spawnParticle(x, y) {
-                const p = document.createElement('div');
-                const size = Math.random() * 3 + 1;
-                p.style.cssText = `
-                    position:fixed; width:${size}px; height:${size}px; border-radius:50%;
-                    background:var(--accent); opacity:0.6;
-                    left:${x}px; top:${y}px;
-                    pointer-events:none; z-index:99995;
-                    transform:translate(-50%,-50%);
-                    box-shadow: 0 0 4px rgba(0,245,255,0.5);
-                `;
-                document.body.appendChild(p);
-                p.animate([
-                    { opacity: 0.6, transform: 'translate(-50%,-50%) scale(1)' },
-                    { opacity: 0, transform: 'translate(-50%,-50%) scale(0)' }
-                ], { duration: 350 + Math.random() * 200, easing: 'ease-out' }).onfinish = () => p.remove();
-            }
-
-            // 모바일 터치 시 커서 숨김
-            window.addEventListener('touchstart', () => {
-                cursor.style.display = 'none';
-                ring.style.display = 'none';
-            });
-        })();
     </script>
 </body>
 </html>
